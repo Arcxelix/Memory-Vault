@@ -111,8 +111,8 @@ story that was showing highlighted.
 
 ### Build and run
 ```bash
-git clone <your-repo-url>
-cd MemoryVault
+git clone https://GitHub.com/Arcxelix/Memory-Vault
+cd Memory-Vault
 ```
 1. Open the folder in Android Studio and let Gradle sync.
 2. Pick a device and press **Run**.
