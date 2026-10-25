@@ -3,6 +3,7 @@ package com.memoryvault.app.ui
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.ColorFilter
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
@@ -12,7 +13,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-/** Free-form crop frame: drag corners, edges, or the whole frame. */
+/** Crop frame with rotate/flip and a live colour filter. Drag corners, edges, or the whole frame. */
 class CropView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
@@ -28,7 +29,13 @@ class CropView @JvmOverloads constructor(
 
     private val d = resources.displayMetrics.density
     private val accent = 0xFF3DE0FF.toInt()
-    private var bmp: Bitmap? = null
+
+    private var base: Bitmap? = null   // untouched preview
+    private var bmp: Bitmap? = null    // preview after flip + rotate
+    private var rot = 0
+    private var flipped = false
+    private var fullFrame = false
+
     private val img = RectF()
     private val box = RectF()
 
@@ -51,8 +58,42 @@ class CropView @JvmOverloads constructor(
     private var lastX = 0f
     private var lastY = 0f
 
-    fun setBitmap(b: Bitmap) {
-        bmp = b
+    /** [full] = start with the frame around the whole photo (editing); otherwise inset (cutting a tag). */
+    fun setSource(b: Bitmap, full: Boolean) {
+        base = b
+        fullFrame = full
+        rot = 0
+        flipped = false
+        rebuild()
+    }
+
+    fun rotate(dir: Int) {
+        rot = (rot + dir + 4) % 4
+        rebuild()
+    }
+
+    fun flip() {
+        rot = (4 - rot) % 4
+        flipped = !flipped
+        rebuild()
+    }
+
+    fun setFilter(f: ColorFilter?) {
+        bmpPaint.colorFilter = f
+        invalidate()
+    }
+
+    fun spec(): BitmapOps.Spec = BitmapOps.Spec(
+        rot, flipped,
+        ((box.left - img.left) / img.width()).coerceIn(0f, 1f),
+        ((box.top - img.top) / img.height()).coerceIn(0f, 1f),
+        ((box.right - img.left) / img.width()).coerceIn(0f, 1f),
+        ((box.bottom - img.top) / img.height()).coerceIn(0f, 1f)
+    )
+
+    private fun rebuild() {
+        val b = base ?: return
+        bmp = BitmapOps.transform(b, rot, flipped)
         layoutImage()
         invalidate()
     }
@@ -72,9 +113,13 @@ class CropView @JvmOverloads constructor(
         val l = (width - w) / 2f
         val t = (height - h) / 2f
         img.set(l, t, l + w, t + h)
-        val ix = img.width() * 0.12f
-        val iy = img.height() * 0.12f
-        box.set(img.left + ix, img.top + iy, img.right - ix, img.bottom - iy)
+        if (fullFrame) {
+            box.set(img)
+        } else {
+            val ix = img.width() * 0.12f
+            val iy = img.height() * 0.12f
+            box.set(img.left + ix, img.top + iy, img.right - ix, img.bottom - iy)
+        }
     }
 
     override fun onDraw(c: Canvas) {
@@ -126,9 +171,10 @@ class CropView @JvmOverloads constructor(
 
     private fun drag(dx: Float, dy: Float) {
         if (mode == MOVE) {
-            val nx = clamp(dx, img.left - box.left, img.right - box.right)
-            val ny = clamp(dy, img.top - box.top, img.bottom - box.bottom)
-            box.offset(nx, ny)
+            box.offset(
+                clamp(dx, img.left - box.left, img.right - box.right),
+                clamp(dy, img.top - box.top, img.bottom - box.bottom)
+            )
             return
         }
         if ((mode and L) != 0) box.left = clamp(box.left + dx, img.left, box.right - minSize)
@@ -155,16 +201,5 @@ class CropView @JvmOverloads constructor(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> mode = 0
         }
         return true
-    }
-
-    /** Returns the framed region of the photo as a new bitmap. */
-    fun cropped(): Bitmap? {
-        val b = bmp ?: return null
-        val s = b.width / img.width()
-        val x = ((box.left - img.left) * s).toInt().coerceIn(0, b.width - 1)
-        val y = ((box.top - img.top) * s).toInt().coerceIn(0, b.height - 1)
-        val w = (box.width() * s).toInt().coerceIn(1, b.width - x)
-        val h = (box.height() * s).toInt().coerceIn(1, b.height - y)
-        return Bitmap.createBitmap(b, x, y, w, h)
     }
 }

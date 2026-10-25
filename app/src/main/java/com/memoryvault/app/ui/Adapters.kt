@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -23,6 +24,7 @@ class AlbumsAdapter(private val onClick: (Story) -> Unit) : RecyclerView.Adapter
 
     val items = mutableListOf<Story>()
     var columns = 3
+    var highlightId = -1L
 
     init {
         setHasStableIds(true)
@@ -32,6 +34,13 @@ class AlbumsAdapter(private val onClick: (Story) -> Unit) : RecyclerView.Adapter
         items.clear()
         items.addAll(list)
         notifyDataSetChanged()
+    }
+
+    fun clearHighlight() {
+        if (highlightId != -1L) {
+            highlightId = -1L
+            notifyDataSetChanged()
+        }
     }
 
     fun move(from: Int, to: Int) {
@@ -57,6 +66,12 @@ class AlbumsAdapter(private val onClick: (Story) -> Unit) : RecyclerView.Adapter
         h.b.name.text = s.name
         h.b.name.setTextSize(TypedValue.COMPLEX_UNIT_SP, if (columns >= 4) 9.5f else 12.5f)
         h.b.badge.isVisible = s.coverVideo
+        val lit = s.id == highlightId
+        val ctx = h.b.root.context
+        h.b.root.strokeColor = ContextCompat.getColor(ctx, if (lit) R.color.accent else R.color.stroke)
+        h.b.root.strokeWidth = (if (lit) 2.5f else 1f).times(ctx.resources.displayMetrics.density).toInt()
+        h.b.root.scaleX = if (lit) 1.05f else 1f
+        h.b.root.scaleY = if (lit) 1.05f else 1f
         val src = s.coverThumb ?: s.coverPath
         if (src != null) {
             h.b.thumb.scaleType = ImageView.ScaleType.CENTER_CROP
@@ -112,10 +127,10 @@ class ItemAdapter(
     }
 }
 
-/** Grid of the story's photos used when choosing what to cut a tag from. */
+/** Grid of thumbnails used when choosing one of the story's own pictures. */
 class PickAdapter(
     private val paths: List<String>,
-    private val onPick: (String) -> Unit
+    private val onPick: (Int, String) -> Unit
 ) : RecyclerView.Adapter<PickAdapter.VH>() {
 
     class VH(val b: ItemPickBinding) : RecyclerView.ViewHolder(b.root)
@@ -126,7 +141,7 @@ class PickAdapter(
         val vh = VH(ItemPickBinding.inflate(LayoutInflater.from(parent.context), parent, false))
         vh.b.root.setOnClickListener {
             val p = vh.bindingAdapterPosition
-            if (p != RecyclerView.NO_POSITION) onPick(paths[p])
+            if (p != RecyclerView.NO_POSITION) onPick(p, paths[p])
         }
         return vh
     }

@@ -3,6 +3,9 @@ package com.memoryvault.app.data
 const val KIND_MEDIA = 0
 const val KIND_TAG = 1
 
+/** The story's cover is stored as an item too, so it has its own name, description and notes. */
+const val KIND_COVER = 2
+
 data class Story(
     val id: Long,
     val name: String,

@@ -12,6 +12,7 @@
         <activity
             android:name=".AlbumsActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,7 +26,7 @@
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".CropActivity"
+            android:name=".EditorActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
 
@@ -50,5 +51,34 @@
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
+
+        <!-- Home-screen widget: story thumbnail slideshow -->
+        <receiver
+            android:name=".widget.StoryWidgetProvider"
+            android:exported="true"
+            android:label="Story slideshow">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/story_widget_info" />
+        </receiver>
+
+        <service
+            android:name=".widget.StoryWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <!-- Lets the system camera save photos/videos for us (no CAMERA permission needed) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

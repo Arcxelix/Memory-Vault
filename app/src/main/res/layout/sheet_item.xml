@@ -58,6 +58,41 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditPhoto"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:text="Edit photo"
+                android:textColor="@color/accent"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_tune"
+                app:iconTint="@color/accent"
+                app:strokeColor="@color/stroke" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReplace"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:text="Switch out"
+                android:textColor="@color/amber"
+                app:cornerRadius="16dp"
+                app:icon="@drawable/ic_swap"
+                app:iconTint="@color/amber"
+                app:strokeColor="@color/stroke" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">

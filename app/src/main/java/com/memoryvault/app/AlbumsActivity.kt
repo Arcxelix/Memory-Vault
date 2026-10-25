@@ -3,9 +3,9 @@ package com.memoryvault.app
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Button
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
@@ -17,11 +17,17 @@ import com.memoryvault.app.data.Story
 import com.memoryvault.app.databinding.ActivityAlbumsBinding
 import com.memoryvault.app.databinding.DialogNewStoryBinding
 import com.memoryvault.app.ui.AlbumsAdapter
+import com.memoryvault.app.ui.MediaPicker
 import com.memoryvault.app.ui.VoiceInput
 import com.memoryvault.app.ui.runBusy
 
 /** Home screen: the grid of stories. Long-press and drag to reorder; the button toggles 3x3 / 4x4. */
 class AlbumsActivity : AppCompatActivity() {
+
+    companion object {
+        const val ACTION_HIGHLIGHT = "com.memoryvault.app.HIGHLIGHT"
+        const val EXTRA_HIGHLIGHT_ID = "highlight_id"
+    }
 
     private lateinit var b: ActivityAlbumsBinding
     private lateinit var grid: GridLayoutManager
@@ -33,10 +39,9 @@ class AlbumsActivity : AppCompatActivity() {
     private var picked: List<Uri> = emptyList()
     private var pickBtn: Button? = null
 
-    private val picker = registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
-        picked = uris
-        pickBtn?.text = if (uris.isEmpty()) "Select photos & videos" else "${uris.size} selected · tap to change"
-    }
+    private val media = MediaPicker(this) { this }
+    private val handler = Handler(Looper.getMainLooper())
+    private var pendingHighlight = -1L
 
     private val touch = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
         ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 0
@@ -70,6 +75,7 @@ class AlbumsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         b = ActivityAlbumsBinding.inflate(layoutInflater)
         setContentView(b.root)
+        pendingHighlight = intent.getLongExtra(EXTRA_HIGHLIGHT_ID, -1L)
 
         val cols = prefs.getInt("cols", 3)
         grid = GridLayoutManager(this, cols)
@@ -90,6 +96,13 @@ class AlbumsActivity : AppCompatActivity() {
         b.fab.setOnClickListener { showNewStory() }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingHighlight = intent.getLongExtra(EXTRA_HIGHLIGHT_ID, -1L)
+        refresh()
+    }
+
     override fun onResume() {
         super.onResume()
         refresh()
@@ -97,6 +110,16 @@ class AlbumsActivity : AppCompatActivity() {
 
     private fun refresh() {
         val list = repo.stories()
+        if (pendingHighlight > 0) {
+            val index = list.indexOfFirst { it.id == pendingHighlight }
+            if (index >= 0) {
+                adapter.highlightId = pendingHighlight
+                b.list.scrollToPosition(index)
+                handler.removeCallbacksAndMessages(null)
+                handler.postDelayed({ adapter.clearHighlight() }, 4000)
+            }
+            pendingHighlight = -1L
+        }
         adapter.submit(list)
         b.empty.isVisible = list.isEmpty()
         b.subtitle.text = "${list.size} ${if (list.size == 1) "story" else "stories"}"
@@ -116,7 +139,10 @@ class AlbumsActivity : AppCompatActivity() {
         pickBtn = v.pickBtn
         v.nameLayout.setEndIconOnClickListener { voice.listen(v.nameInput) }
         v.pickBtn.setOnClickListener {
-            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+            media.pick(multiple = true) { uris ->
+                picked = uris
+                pickBtn?.text = "${uris.size} selected · tap to change"
+            }
         }
         MaterialAlertDialogBuilder(this)
             .setView(v.root)

@@ -8,9 +8,9 @@ import android.os.Looper
 import android.view.View
 import android.widget.ImageView
 import android.widget.PopupMenu
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.media3.common.AudioAttributes
@@ -32,6 +32,7 @@ import com.memoryvault.app.data.Story
 import com.memoryvault.app.databinding.ActivityStoryBinding
 import com.memoryvault.app.ui.ItemAdapter
 import com.memoryvault.app.ui.ItemSheet
+import com.memoryvault.app.ui.MediaPicker
 import com.memoryvault.app.ui.PickAdapter
 import com.memoryvault.app.ui.VoiceInput
 import com.memoryvault.app.ui.dp
@@ -48,9 +49,13 @@ class StoryActivity : AppCompatActivity() {
         const val EXTRA_STORY_ID = "story_id"
     }
 
+    /** A photo waiting to be cut into a tag. Temp copies are deleted after use. */
+    private class TagSource(val path: String, val temp: Boolean)
+
     private lateinit var b: ActivityStoryBinding
     private val repo by lazy { Repository.get(this) }
     private val voice = VoiceInput(this)
+    private val media = MediaPicker(this) { this }
     private val handler = Handler(Looper.getMainLooper())
     private val hideChrome = Runnable { setChrome(false) }
 
@@ -60,25 +65,18 @@ class StoryActivity : AppCompatActivity() {
     private var isBound = false
     private var boundPath: String? = null
 
+    private val tagQueue = ArrayDeque<TagSource>()
+    private var currentSource: TagSource? = null
+
     private val memAdapter = ItemAdapter(140, 1.3f) { openItem(it) }
     private val tagAdapter = ItemAdapter(96, 1f) { openItem(it) }
 
-    private val addPicker = registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
-        if (uris.isNotEmpty()) {
-            runBusy("Adding to story…", onDone = { reload() }) { repo.addMedia(storyId, uris) }
-        }
-    }
-
-    private val coverPicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            isBound = false
-            runBusy("Changing thumbnail…", onDone = { reload() }) { repo.changeCover(storyId, uri) }
-        }
-    }
-
-    private val cropLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
-        val out = res.data?.getStringExtra(CropActivity.EXTRA_OUT)
-        if (res.resultCode == RESULT_OK && out != null) askTagName(out)
+    private val editorLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        val src = currentSource
+        currentSource = null
+        if (src != null && src.temp) repo.deleteTemp(src.path)
+        val out = res.data?.getStringExtra(EditorActivity.EXTRA_OUT)
+        if (res.resultCode == RESULT_OK && out != null) askTagName(out) else clearQueue()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,7 +99,7 @@ class StoryActivity : AppCompatActivity() {
         b.coverPlayer.setControllerVisibilityListener(
             PlayerView.ControllerVisibilityListener { visibility -> setChrome(visibility == View.VISIBLE) }
         )
-        b.addMem.setOnClickListener { pickMore() }
+        b.addMem.setOnClickListener { addToStory() }
         b.addTag.setOnClickListener { startTagFlow() }
     }
 
@@ -200,35 +198,35 @@ class StoryActivity : AppCompatActivity() {
     }
 
     // ------------------------------------------------------------ menu
-    private fun pickMore() {
-        addPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
-    }
-
     private fun showMenu() {
         val s = story ?: return
         val pm = PopupMenu(this, b.menuBtn)
         pm.menu.add(0, 1, 0, "Rename story")
         pm.menu.add(0, 2, 1, "Change thumbnail")
+        pm.menu.add(0, 3, 2, "Thumbnail details & edit")
         if (s.coverVideo) {
-            pm.menu.add(0, 3, 2, "Loop video").apply {
+            pm.menu.add(0, 4, 3, "Loop video").apply {
                 isCheckable = true
                 isChecked = s.loopVideo
             }
         }
-        pm.menu.add(0, 4, 3, "Add photos & videos")
-        pm.menu.add(0, 5, 4, "Delete story")
+        pm.menu.add(0, 5, 4, "Add photos & videos")
+        pm.menu.add(0, 6, 5, "Delete story")
         pm.setOnMenuItemClickListener { m ->
             when (m.itemId) {
                 1 -> rename(s)
-                2 -> coverPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+                2 -> changeCover()
                 3 -> {
+                    val cover = repo.coverItem(storyId)
+                    if (cover != null) openItem(cover) else toast("This story has no thumbnail yet")
+                }
+                4 -> {
                     repo.setLoop(storyId, !s.loopVideo)
                     story = repo.story(storyId)
-                    player?.repeatMode =
-                        if (!s.loopVideo) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+                    player?.repeatMode = if (!s.loopVideo) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
                 }
-                4 -> pickMore()
-                5 -> confirmDelete()
+                5 -> addToStory()
+                6 -> confirmDelete()
             }
             true
         }
@@ -257,42 +255,127 @@ class StoryActivity : AppCompatActivity() {
             .show()
     }
 
-    // ------------------------------------------------------------ tags
-    private fun startTagFlow() {
-        val s = story ?: return
-        val sources = mutableListOf<String>()
-        val coverPath = s.coverPath
-        if (!s.coverVideo && coverPath != null) sources.add(coverPath)
-        repo.items(storyId, KIND_MEDIA).filter { !it.video }.forEach { sources.add(it.path) }
-        if (sources.isEmpty()) {
-            toast("Add a photo first. Tags are cut out of your photos.")
+    // ------------------------------------------------------------ add to story
+    private fun addToStory() {
+        media.pick(multiple = true) { uris ->
+            runBusy("Adding to story…", onDone = { reload() }) { repo.addMedia(storyId, uris) }
+        }
+    }
+
+    // ------------------------------------------------------------ change cover
+    private fun changeCover() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Change thumbnail")
+            .setItems(arrayOf("Pick from this story", "Gallery or camera")) { _, which ->
+                if (which == 0) coverFromStory() else coverFromOutside()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun coverFromStory() {
+        val list = repo.items(storyId, KIND_MEDIA)
+        if (list.isEmpty()) {
+            toast("No memories in this story yet. Use gallery or camera.")
             return
         }
-        val rv = RecyclerView(this).apply {
-            layoutManager = GridLayoutManager(context, 3)
-            setPadding(dp(12), dp(8), dp(12), dp(8))
-            clipToPadding = false
+        showGrid("Pick the new thumbnail", list.map { it.thumb ?: it.path }) { index ->
+            repo.setCoverFromItem(storyId, list[index].id)
+            isBound = false
+            reload()
         }
-        lateinit var dlg: androidx.appcompat.app.AlertDialog
-        rv.adapter = PickAdapter(sources) { path ->
-            dlg.dismiss()
-            cropLauncher.launch(Intent(this, CropActivity::class.java).putExtra(CropActivity.EXTRA_IN, path))
+    }
+
+    private fun coverFromOutside() {
+        media.pick(multiple = false) { uris ->
+            uris.firstOrNull()?.let { uri ->
+                isBound = false
+                runBusy("Changing thumbnail…", onDone = { reload() }) { repo.setCoverFromUri(storyId, uri) }
+            }
         }
-        dlg = MaterialAlertDialogBuilder(this)
-            .setTitle("Pick a photo to cut from")
-            .setView(rv)
+    }
+
+    // ------------------------------------------------------------ tags
+    private fun startTagFlow() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Cut a tag from")
+            .setItems(arrayOf("This story's photos", "Other photos (gallery or camera)")) { _, which ->
+                if (which == 0) tagFromStory() else tagFromOutside()
+            }
             .setNegativeButton("Cancel", null)
-            .create()
-        dlg.show()
+            .show()
+    }
+
+    private fun tagFromStory() {
+        val photos = (listOfNotNull(repo.coverItem(storyId)) + repo.items(storyId, KIND_MEDIA)).filter { !it.video }
+        if (photos.isEmpty()) {
+            toast("Add a photo first, or cut from other photos.")
+            return
+        }
+        showGrid("Pick a photo to cut from", photos.map { it.path }) { index ->
+            tagQueue.add(TagSource(photos[index].path, false))
+            nextTag()
+        }
+    }
+
+    private fun tagFromOutside() {
+        media.pick(multiple = true, imagesOnly = true) { uris ->
+            var copies = emptyList<String>()
+            runBusy("Opening photos…", onDone = {
+                copies.forEach { tagQueue.add(TagSource(it, true)) }
+                nextTag()
+            }) {
+                copies = uris.mapNotNull { repo.copyToTemp(it) }
+            }
+        }
+    }
+
+    private fun nextTag() {
+        val src = tagQueue.removeFirstOrNull() ?: return
+        currentSource = src
+        editorLauncher.launch(
+            Intent(this, EditorActivity::class.java)
+                .putExtra(EditorActivity.EXTRA_IN, src.path)
+                .putExtra(EditorActivity.EXTRA_MODE, EditorActivity.MODE_TAG)
+        )
+    }
+
+    private fun clearQueue() {
+        tagQueue.forEach { if (it.temp) repo.deleteTemp(it.path) }
+        tagQueue.clear()
     }
 
     private fun askTagName(path: String) {
         promptText(
             this, "Name this tag", "Tag name (optional)", "", voice,
-            onCancel = { runCatching { File(path).delete() } }
+            onCancel = {
+                runCatching { File(path).delete() }
+                nextTag()
+            }
         ) { name ->
             repo.addTag(storyId, path, name.trim())
             reload()
+            nextTag()
         }
+    }
+
+    // ------------------------------------------------------------ helpers
+    private fun showGrid(title: String, thumbs: List<String>, onPick: (Int) -> Unit) {
+        val rv = RecyclerView(this).apply {
+            layoutManager = GridLayoutManager(context, 3)
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            clipToPadding = false
+        }
+        lateinit var dlg: AlertDialog
+        rv.adapter = PickAdapter(thumbs) { index, _ ->
+            dlg.dismiss()
+            onPick(index)
+        }
+        dlg = MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setView(rv)
+            .setNegativeButton("Cancel", null)
+            .create()
+        dlg.show()
     }
 }

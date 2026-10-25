@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="22dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="8dp">
+
+        <TextView
+            android:id="@+id/editorTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/Text.Title"
+            android:textSize="22sp" />
+
+        <TextView
+            android:id="@+id/editorHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textAppearance="@style/Text.Dim"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <com.memoryvault.app.ui.CropView
+        android:id="@+id/crop"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:id="@+id/adjustPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="22dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="22dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Brightness"
+            android:textAppearance="@style/Text.Meta" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sBright"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:value="0"
+            android:valueFrom="-80"
+            android:valueTo="80"
+            app:haloColor="@color/accent"
+            app:thumbColor="@color/accent"
+            app:tickVisible="false"
+            app:trackColorActive="@color/accent"
+            app:trackColorInactive="@color/stroke" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Contrast"
+            android:textAppearance="@style/Text.Meta" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sContrast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:value="1"
+            android:valueFrom="0.5"
+            android:valueTo="1.5"
+            app:haloColor="@color/accent"
+            app:thumbColor="@color/accent"
+            app:tickVisible="false"
+            app:trackColorActive="@color/accent"
+            app:trackColorInactive="@color/stroke" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Colour"
+            android:textAppearance="@style/Text.Meta" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sSat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:value="1"
+            android:valueFrom="0"
+            android:valueTo="2"
+            app:haloColor="@color/accent"
+            app:thumbColor="@color/accent"
+            app:tickVisible="false"
+            app:trackColorActive="@color/accent"
+            app:trackColorInactive="@color/stroke" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="22dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="22dp">
+
+        <ImageButton
+            android:id="@+id/btnRotL"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_icon_btn"
+            android:contentDescription="Rotate left"
+            android:src="@drawable/ic_rotate_left"
+            android:tint="@color/text" />
+
+        <ImageButton
+            android:id="@+id/btnRotR"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/bg_icon_btn"
+            android:contentDescription="Rotate right"
+            android:src="@drawable/ic_rotate_right"
+            android:tint="@color/text" />
+
+        <ImageButton
+            android:id="@+id/btnFlip"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/bg_icon_btn"
+            android:contentDescription="Flip"
+            android:src="@drawable/ic_flip"
+            android:tint="@color/text" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAdjust"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="Adjust"
+            android:textColor="@color/accent"
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_tune"
+            app:iconTint="@color/accent"
+            app:strokeColor="@color/stroke" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cancel"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:text="Cancel"
+            android:textColor="@color/text"
+            app:cornerRadius="18dp"
+            app:strokeColor="@color/stroke" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/saveCopy"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:text="Save copy"
+            android:textColor="@color/accent"
+            app:cornerRadius="18dp"
+            app:strokeColor="@color/accent" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/confirm"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:text="Save"
+            android:textColor="@color/bg"
+            app:backgroundTint="@color/accent"
+            app:cornerRadius="18dp" />
+    </LinearLayout>
+</LinearLayout>

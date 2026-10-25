@@ -17,7 +17,7 @@ import java.util.List;
  */
 public final class DbHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "vault.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
     private static DbHelper instance;
 
     public static synchronized DbHelper get(Context ctx) {
@@ -57,7 +57,12 @@ public final class DbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // v1 only
+        if (oldVersion < 2) {
+            // v2: covers become items (kind 2) so they carry their own text
+            db.execSQL("INSERT INTO items (story_id, kind, path, thumb, is_video, position, created) "
+                    + "SELECT id, 2, cover_path, cover_thumb, cover_video, 0, created "
+                    + "FROM stories WHERE cover_path IS NOT NULL");
+        }
     }
 
     // ---------------------------------------------------------------- stories
@@ -209,6 +214,34 @@ public final class DbHelper extends SQLiteOpenHelper {
 
     public void deleteItem(long id) {
         getWritableDatabase().delete("items", "id=?", new String[]{String.valueOf(id)});
+    }
+
+    /** Moves an item to another kind (e.g. memory <-> cover), putting it last in that kind. */
+    public void setItemKind(long id, int kind) {
+        Item item = itemById(id);
+        if (item == null) return;
+        SQLiteDatabase d = getWritableDatabase();
+        long pos = 0;
+        Cursor c = d.rawQuery("SELECT COALESCE(MAX(position), -1) + 1 FROM items WHERE story_id=? AND kind=?",
+                new String[]{String.valueOf(item.getStoryId()), String.valueOf(kind)});
+        try {
+            if (c.moveToFirst()) pos = c.getLong(0);
+        } finally {
+            c.close();
+        }
+        ContentValues v = new ContentValues();
+        v.put("kind", kind);
+        v.put("position", pos);
+        d.update("items", v, "id=?", new String[]{String.valueOf(id)});
+    }
+
+    /** Switches the photo/video file of an item; name, description and notes stay untouched. */
+    public void updateItemMedia(long id, String path, @Nullable String thumb, boolean video) {
+        ContentValues v = new ContentValues();
+        v.put("path", path);
+        v.put("thumb", thumb);
+        v.put("is_video", video ? 1 : 0);
+        getWritableDatabase().update("items", v, "id=?", new String[]{String.valueOf(id)});
     }
 
     // ---------------------------------------------------------------- helpers
