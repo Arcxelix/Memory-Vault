@@ -1,0 +1,115 @@
+<resources>
+    <style name="Theme.Vault" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorOnPrimary">@color/bg</item>
+        <item name="colorPrimaryContainer">@color/surface2</item>
+        <item name="colorOnPrimaryContainer">@color/text</item>
+        <item name="colorSecondary">@color/amber</item>
+        <item name="colorOnSecondary">@color/bg</item>
+        <item name="colorError">@color/danger</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text</item>
+        <item name="colorSurfaceVariant">@color/surface2</item>
+        <item name="colorOnSurfaceVariant">@color/text_dim</item>
+        <item name="colorSurfaceContainerLowest">@color/bg</item>
+        <item name="colorSurfaceContainerLow">@color/surface</item>
+        <item name="colorSurfaceContainer">@color/surface2</item>
+        <item name="colorSurfaceContainerHigh">@color/surface2</item>
+        <item name="colorSurfaceContainerHighest">@color/surface2</item>
+        <item name="colorOutline">@color/stroke</item>
+        <item name="colorOutlineVariant">@color/stroke</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.Vault.BottomSheet</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Vault.Dialog</item>
+    </style>
+
+    <style name="Theme.Vault.Translucent" parent="Theme.Vault">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    <!-- Rounded shapes -->
+    <style name="Shape.Vault.Sheet" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">28dp</item>
+        <item name="cornerSizeTopRight">28dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
+    <style name="Shape.Vault.Dialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="Shape.Vault.Fab" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">22dp</item>
+    </style>
+
+    <style name="ThemeOverlay.Vault.BottomSheet" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.Vault.BottomSheet</item>
+        <item name="android:navigationBarColor">@color/surface</item>
+    </style>
+
+    <style name="Widget.Vault.BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="backgroundTint">@color/surface</item>
+        <item name="shapeAppearanceOverlay">@style/Shape.Vault.Sheet</item>
+    </style>
+
+    <style name="ThemeOverlay.Vault.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="alertDialogStyle">@style/MaterialAlertDialog.Vault</item>
+    </style>
+
+    <style name="MaterialAlertDialog.Vault" parent="MaterialAlertDialog.Material3">
+        <item name="backgroundTint">@color/surface2</item>
+        <item name="shapeAppearanceOverlay">@style/Shape.Vault.Dialog</item>
+    </style>
+
+    <!-- Type: condensed HUD-style headings, clean body -->
+    <style name="Text.Title" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textColor">@color/text</item>
+    </style>
+
+    <style name="Text.Section" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:textColor">@color/text</item>
+    </style>
+
+    <style name="Text.Meta" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:textColor">@color/accent</item>
+    </style>
+
+    <style name="Text.Dim" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/text_dim</item>
+    </style>
+
+    <style name="Text.Body" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
+    </style>
+
+    <style name="Widget.Vault.TextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">16dp</item>
+        <item name="boxCornerRadiusTopEnd">16dp</item>
+        <item name="boxCornerRadiusBottomStart">16dp</item>
+        <item name="boxCornerRadiusBottomEnd">16dp</item>
+        <item name="boxStrokeColor">@color/box_stroke</item>
+        <item name="hintTextColor">@color/accent</item>
+        <item name="endIconTint">@color/accent</item>
+    </style>
+</resources>

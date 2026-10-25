@@ -1,0 +1,13 @@
+<resources>
+    <color name="bg">#05060B</color>
+    <color name="surface">#0B0D14</color>
+    <color name="surface2">#131724</color>
+    <color name="stroke">#232A3C</color>
+    <color name="accent">#3DE0FF</color>
+    <color name="amber">#FFB547</color>
+    <color name="danger">#FF4D6D</color>
+    <color name="text">#EAF2FF</color>
+    <color name="text_dim">#8A94AB</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+</resources>

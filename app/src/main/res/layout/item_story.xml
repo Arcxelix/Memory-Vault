@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.memoryvault.app.ui.SquareCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    app:cardBackgroundColor="@color/surface2"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/stroke"
+    app:strokeWidth="1dp">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/thumb"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="Story thumbnail"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="@drawable/scrim_bottom"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed"
+            android:letterSpacing="0.05"
+            android:maxLines="1"
+            android:paddingStart="10dp"
+            android:paddingTop="30dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="9dp"
+            android:textColor="@color/text"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/badge"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_play_badge"
+            android:contentDescription="Video"
+            android:padding="5dp"
+            android:src="@drawable/ic_play"
+            android:visibility="gone" />
+    </FrameLayout>
+</com.memoryvault.app.ui.SquareCardView>
