@@ -246,4 +246,4 @@ Issues and pull requests are welcome.
 
 ## License
 
-Released under the GNU Public License. See [LICENSE](LICENSE).
+Released under the GNU Public License v3. See [LICENSE](LICENSE).
