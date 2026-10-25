@@ -86,7 +86,7 @@ the same drawer as any memory.
 Select photos and videos in the Gallery, WhatsApp or any other app, tap **Share**, choose
 **Memory Vault**, then add them to a new or an existing story.
 
-### Home-screen widget
+### Home-screen widget (Beta)
 Add **Story slideshow** from the widget picker. It cycles every story's cover, in album order, on loop:
 a photo is shown for **20 s**, a video plays **once**. Tapping it opens the albums page with the
 story that was showing highlighted.
